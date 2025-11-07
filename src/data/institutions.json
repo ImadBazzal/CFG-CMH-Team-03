@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "name": "Ohio State University",
+    "city": "Columbus",
+    "state": "OH",
+    "diCode": "1592"
+  },
+  {
+    "id": 2,
+    "name": "University of California, Berkeley",
+    "city": "Berkeley",
+    "state": "CA",
+    "diCode": "1312"
+  },
+  {
+    "id": 3,
+    "name": "Texas A&M University",
+    "city": "College Station",
+    "state": "TX",
+    "diCode": "3632"
+  },
+  {
+    "id": 4,
+    "name": "University of Florida",
+    "city": "Gainesville",
+    "state": "FL",
+    "diCode": "1535"
+  },
+  {
+    "id": 5,
+    "name": "Pennsylvania State University",
+    "city": "University Park",
+    "state": "PA",
+    "diCode": "3329"
+  }
+]
