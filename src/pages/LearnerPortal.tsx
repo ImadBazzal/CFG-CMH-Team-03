@@ -9,7 +9,6 @@ import {
   getAllUniversities, 
   getAllExamNames, 
   filterUniversities, 
-  getUniversityById,
   type University 
 } from "@/lib/universityDatabase";
 import CollegeMap from "@/components/CollegeMap";
@@ -327,13 +326,14 @@ const LearnerPortal = () => {
 
   // Get exam data for a specific university (used in expanded card view)
   const getExamDataForUniversity = (universityId: number) => {
-    const university = getUniversityById(universityId);
+    // Find university from already-loaded allUniversities array
+    const university = allUniversities.find(u => u.id === universityId);
     if (!university) return [];
     
     // Return ALL exams (both accepted and not accepted) for complete view
     return university.clepPolicies.map(p => ({
       exam: p.examName,
-      accepted: p.minimumScore !== null,
+      accepted: p.minimumScore !== null && p.minimumScore > 0,
       minScore: p.minimumScore,
       credits: p.creditsAwarded,
       courseCode: p.classEquivalent
