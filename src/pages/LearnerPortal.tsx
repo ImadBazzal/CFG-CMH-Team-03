@@ -9,7 +9,6 @@ import {
   getAllUniversities, 
   getAllExamNames, 
   filterUniversities, 
-  getUniversityById,
   type University 
 } from "@/lib/universityDatabase";
 import CollegeMap from "@/components/CollegeMap";
@@ -108,38 +107,64 @@ const LearnerPortal = () => {
     "Low score requirements",
   ];
 
-  // Get all universities and exams from database
-  const allUniversities = useMemo(() => getAllUniversities(), []);
+  const [allUniversities, setAllUniversities] = useState<College[]>([]);
+  const [filteredColleges, setFilteredColleges] = useState<College[]>([]);
+  const [loading, setLoading] = useState(true);
   const availableExams = useMemo(() => getAllExamNames(), []);
 
-  // Filter colleges based on filter state and then sort according to sortOption
-  const filteredColleges = useMemo(() => {
-    const examNames = userExamScores.map((e) => e.exam);
+  // Load universities
+  useEffect(() => {
+    const loadUniversities = async () => {
+      try {
+        setLoading(true);
+        const universities = await getAllUniversities();
+        setAllUniversities(universities as College[]);
+      } catch (error) {
+        console.error("Error loading universities:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadUniversities();
+  }, []);
 
-    const filters = {
-      state: selectedState || undefined,
-      minScore: minScore > 0 ? minScore : undefined,
-      minCredits: minCredits > 0 ? minCredits : undefined,
-      examNames: examNames.length > 0 ? examNames : undefined,
-      minExamsAccepted: examNames.length > 0 ? examNames.length : undefined,
-      userExamScores: userExamScores.length > 0 ? userExamScores : undefined,
+  // Filter and sort colleges
+  useEffect(() => {
+    const filterAndSort = async () => {
+      if (allUniversities.length === 0) {
+        setFilteredColleges([]);
+        return;
+      }
+      
+      const examNames = userExamScores.map((e) => e.exam);
+
+      const filters = {
+        state: selectedState || undefined,
+        minScore: minScore > 0 ? minScore : undefined,
+        minCredits: minCredits > 0 ? minCredits : undefined,
+        examNames: examNames.length > 0 ? examNames : undefined,
+        minExamsAccepted: examNames.length > 0 ? examNames.length : undefined,
+        userExamScores: userExamScores.length > 0 ? userExamScores : undefined,
+      };
+
+      let results = await filterUniversities(filters) as College[];
+
+      // Sorting
+      if (sortOption === "name") {
+        results = results.slice().sort((a, b) => a.name.localeCompare(b.name));
+      } else if (sortOption === "lowestScore") {
+        results = results
+          .slice()
+          .sort((a, b) => (a.avgScore ?? Number.POSITIVE_INFINITY) - (b.avgScore ?? Number.POSITIVE_INFINITY));
+      } else if (sortOption === "mostExams") {
+        results = results.slice().sort((a, b) => (b.examsAccepted ?? 0) - (a.examsAccepted ?? 0));
+      }
+
+      setFilteredColleges(results);
     };
 
-    let results = filterUniversities(filters) as College[];
-
-    // Sorting
-    if (sortOption === "name") {
-      results = results.slice().sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortOption === "lowestScore") {
-      results = results
-        .slice()
-        .sort((a, b) => (a.avgScore ?? Number.POSITIVE_INFINITY) - (b.avgScore ?? Number.POSITIVE_INFINITY));
-    } else if (sortOption === "mostExams") {
-      results = results.slice().sort((a, b) => (b.examsAccepted ?? 0) - (a.examsAccepted ?? 0));
-    }
-
-    return results;
-  }, [selectedState, minScore, minCredits, userExamScores, sortOption]);
+    filterAndSort();
+  }, [selectedState, minScore, minCredits, userExamScores, sortOption, allUniversities]);
 
   // Filter handler functions
   const handleInstitutionTypeToggle = (type: string) => {
@@ -301,13 +326,14 @@ const LearnerPortal = () => {
 
   // Get exam data for a specific university (used in expanded card view)
   const getExamDataForUniversity = (universityId: number) => {
-    const university = getUniversityById(universityId);
+    // Find university from already-loaded allUniversities array
+    const university = allUniversities.find(u => u.id === universityId);
     if (!university) return [];
     
     // Return ALL exams (both accepted and not accepted) for complete view
     return university.clepPolicies.map(p => ({
       exam: p.examName,
-      accepted: p.minimumScore !== null,
+      accepted: p.minimumScore !== null && p.minimumScore > 0,
       minScore: p.minimumScore,
       credits: p.creditsAwarded,
       courseCode: p.classEquivalent
@@ -572,57 +598,7 @@ const LearnerPortal = () => {
               </div>
             </div>
 
-            {/* Institution Type */}
-            <div className="space-y-3">
-              <h4 className="font-medium text-sm">Institution Type</h4>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm">
-                  <input 
-                    type="checkbox" 
-                    className="rounded" 
-                    checked={institutionTypes.includes("public")}
-                    onChange={() => handleInstitutionTypeToggle("public")}
-                  />
-                  <span>Public</span>
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input 
-                    type="checkbox" 
-                    className="rounded" 
-                    checked={institutionTypes.includes("private")}
-                    onChange={() => handleInstitutionTypeToggle("private")}
-                  />
-                  <span>Private</span>
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input 
-                    type="checkbox" 
-                    className="rounded" 
-                    checked={institutionTypes.includes("2-year")}
-                    onChange={() => handleInstitutionTypeToggle("2-year")}
-                  />
-                  <span>2-Year</span>
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input 
-                    type="checkbox" 
-                    className="rounded" 
-                    checked={institutionTypes.includes("4-year")}
-                    onChange={() => handleInstitutionTypeToggle("4-year")}
-                  />
-                  <span>4-Year</span>
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input 
-                    type="checkbox" 
-                    className="rounded" 
-                    checked={institutionTypes.includes("online")}
-                    onChange={() => handleInstitutionTypeToggle("online")}
-                  />
-                  <span>Online Programs Available</span>
-                </label>
-              </div>
-            </div>
+            
 
             {/* CLEP Exam Selection */}
             <div className="space-y-3">
@@ -1066,7 +1042,7 @@ const LearnerPortal = () => {
               <span className="font-semibold">Comparing {selectedForCompare.length} colleges</span>
               <div className="flex gap-2">
                 {selectedForCompare.map(id => {
-                  const college = getUniversityById(id);
+                  const college = allUniversities.find(u => u.id === id);
                   return (
                     <Badge key={id} variant="secondary" className="flex items-center gap-1 pr-1">
                       {college?.name}
@@ -1108,7 +1084,7 @@ const LearnerPortal = () => {
                 <tr className="border-b">
                   <th className="p-3 text-left sticky left-0 bg-card">CLEP Exam</th>
                   {selectedForCompare.map(id => {
-                    const college = getUniversityById(id);
+                    const college = allUniversities.find(u => u.id === id);
                     return (
                       <th key={id} className="p-3 text-left min-w-[200px]">
                         <div>
@@ -1126,7 +1102,7 @@ const LearnerPortal = () => {
                 {availableExams.map((examName) => {
                   // Get exam data for each selected university
                   const examData = selectedForCompare.map(id => {
-                    const university = getUniversityById(id);
+                    const university = allUniversities.find(u => u.id === id);
                     if (!university) return null;
                     const policy = university.clepPolicies.find(p => p.examName === examName);
                     return policy;
@@ -1313,8 +1289,8 @@ const LearnerPortal = () => {
                                   )}
                                 </td>
                                 <td className="p-3 whitespace-nowrap">
-                                  {exam.courseEquivalent ? (
-                                    <span className="font-medium">{exam.courseEquivalent}</span>
+                                  {exam.courseCode ? (
+                                    <span className="font-medium">{exam.courseCode}</span>
                                   ) : (
                                     <span className="text-muted-foreground">-</span>
                                   )}
