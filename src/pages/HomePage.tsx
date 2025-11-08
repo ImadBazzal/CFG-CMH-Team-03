@@ -138,7 +138,7 @@ const Index = () => {
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-4xl font-bold mb-4">Choose Your Portal</h2>
             <p className="text-lg text-muted-foreground">
-              Whether you're a student, institution, or administrator, we have the right tools for you
+              Whether you're a student, institution, or administrator, we have the tool for you
             </p>
           </div>
 
