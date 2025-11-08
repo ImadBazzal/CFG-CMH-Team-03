@@ -598,57 +598,7 @@ const LearnerPortal = () => {
               </div>
             </div>
 
-            {/* Institution Type */}
-            <div className="space-y-3">
-              <h4 className="font-medium text-sm">Institution Type</h4>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm">
-                  <input 
-                    type="checkbox" 
-                    className="rounded" 
-                    checked={institutionTypes.includes("public")}
-                    onChange={() => handleInstitutionTypeToggle("public")}
-                  />
-                  <span>Public</span>
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input 
-                    type="checkbox" 
-                    className="rounded" 
-                    checked={institutionTypes.includes("private")}
-                    onChange={() => handleInstitutionTypeToggle("private")}
-                  />
-                  <span>Private</span>
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input 
-                    type="checkbox" 
-                    className="rounded" 
-                    checked={institutionTypes.includes("2-year")}
-                    onChange={() => handleInstitutionTypeToggle("2-year")}
-                  />
-                  <span>2-Year</span>
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input 
-                    type="checkbox" 
-                    className="rounded" 
-                    checked={institutionTypes.includes("4-year")}
-                    onChange={() => handleInstitutionTypeToggle("4-year")}
-                  />
-                  <span>4-Year</span>
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input 
-                    type="checkbox" 
-                    className="rounded" 
-                    checked={institutionTypes.includes("online")}
-                    onChange={() => handleInstitutionTypeToggle("online")}
-                  />
-                  <span>Online Programs Available</span>
-                </label>
-              </div>
-            </div>
+            
 
             {/* CLEP Exam Selection */}
             <div className="space-y-3">
