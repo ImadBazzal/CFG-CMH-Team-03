@@ -236,30 +236,29 @@ const LearnerPortal = () => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const messageText = input;
     setInput("");
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
-      });
-
-      const data = await res.json();
+      // Import and use the chat handler directly
+      const { handleChatRequest } = await import("@/pages/api/chat");
+      const reply = await handleChatRequest(messageText);
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: data.reply,
+        text: reply,
         sender: "ai",
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, aiMessage]);
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Chat error:", error);
+      const errorMessage = error?.message || "Sorry, I had trouble answering that. Try again!";
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "Sorry, I had trouble answering that. Try again!",
+        text: errorMessage,
         sender: "ai",
         timestamp: new Date(),
       };
