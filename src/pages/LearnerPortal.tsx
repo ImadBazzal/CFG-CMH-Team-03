@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Send, Bot, User, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, MapPin, Star, X, Grid3x3, List, Download, Trash2, Map } from "lucide-react";
+import { Send, Bot, User, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, MapPin, Star, X, Grid3x3, List, Download, Trash2, Map, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -30,6 +30,12 @@ interface UserExamScore {
   score: number | null;
 }
 
+interface ExamPolicyFeedback {
+  collegeId: number;
+  examName: string;
+  feedback: "up" | "down" | null;
+}
+
 const LearnerPortal = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -40,6 +46,7 @@ const LearnerPortal = () => {
   const [showComparison, setShowComparison] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [userExamScores, setUserExamScores] = useState<UserExamScore[]>([]);
+  const [examPolicyFeedback, setExamPolicyFeedback] = useState<ExamPolicyFeedback[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatbotSectionRef = useRef<HTMLDivElement>(null);
 
@@ -135,6 +142,49 @@ const LearnerPortal = () => {
     setUserExamScores([]);
     setMinScore(0);
     setMinCredits(0);
+  };
+
+  // Get feedback for a specific exam policy
+  const getFeedback = (collegeId: number, examName: string): "up" | "down" | null => {
+    const feedback = examPolicyFeedback.find(
+      f => f.collegeId === collegeId && f.examName === examName
+    );
+    return feedback?.feedback || null;
+  };
+
+  // Get total feedback counts for an exam across all colleges
+  const getExamFeedbackCounts = (examName: string) => {
+    const examFeedback = examPolicyFeedback.filter(f => f.examName === examName);
+    const thumbsUp = examFeedback.filter(f => f.feedback === "up").length;
+    const thumbsDown = examFeedback.filter(f => f.feedback === "down").length;
+    return { thumbsUp, thumbsDown };
+  };
+
+  // Handle feedback click
+  const handleFeedbackClick = (collegeId: number, examName: string, feedbackType: "up" | "down") => {
+    setExamPolicyFeedback(prev => {
+      const existing = prev.find(
+        f => f.collegeId === collegeId && f.examName === examName
+      );
+      
+      if (existing) {
+        // If clicking the same feedback, remove it (toggle off)
+        if (existing.feedback === feedbackType) {
+          return prev.filter(
+            f => !(f.collegeId === collegeId && f.examName === examName)
+          );
+        }
+        // Otherwise, update the feedback
+        return prev.map(f =>
+          f.collegeId === collegeId && f.examName === examName
+            ? { ...f, feedback: feedbackType }
+            : f
+        );
+      } else {
+        // Add new feedback
+        return [...prev, { collegeId, examName, feedback: feedbackType }];
+      }
+    });
   };
 
   const getAIResponse = (userMessage: string): string => {
@@ -825,35 +875,78 @@ const LearnerPortal = () => {
                                   <th className="text-left p-2">Min Score</th>
                                   <th className="text-left p-2">Credits</th>
                                   <th className="text-left p-2">Course Equivalent</th>
+                                  <th className="text-left p-2">Feedback</th>
                                 </tr>
                               </thead>
                               <tbody>
-                                {getExamDataForUniversity(college.id).map((exam, idx) => (
-                                  <tr key={idx} className="border-t">
-                                    <td className="p-2 font-medium">{exam.exam}</td>
-                                    <td className="p-2">
-                                      {exam.accepted ? (
-                                        <span className="text-green-500 font-semibold">✓ {exam.minScore}</span>
-                                      ) : (
-                                        <span className="text-red-500">✗ Not Accepted</span>
-                                      )}
-                                    </td>
-                                    <td className="p-2">
-                                      {exam.accepted && exam.credits ? (
-                                        <span>{exam.credits}</span>
-                                      ) : (
-                                        <span className="text-muted-foreground">-</span>
-                                      )}
-                                    </td>
-                                    <td className="p-2">
-                                      {exam.accepted && exam.courseCode ? (
-                                        <span className="text-muted-foreground">{exam.courseCode}</span>
-                                      ) : (
-                                        <span className="text-muted-foreground">-</span>
-                                      )}
-                                    </td>
-                                  </tr>
-                                ))}
+                                {getExamDataForUniversity(college.id).map((exam, idx) => {
+                                  const currentFeedback = getFeedback(college.id, exam.exam);
+                                  const feedbackCounts = getExamFeedbackCounts(exam.exam);
+                                  return (
+                                    <tr key={idx} className="border-t">
+                                      <td className="p-2">
+                                        <div className="flex flex-col gap-1">
+                                          <span className="font-medium">{exam.exam}</span>
+                                          {(feedbackCounts.thumbsUp > 0 || feedbackCounts.thumbsDown > 0) && (
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                              <span className="flex items-center gap-0.5 text-green-600">
+                                                <ThumbsUp className="h-3 w-3" />
+                                                {feedbackCounts.thumbsUp}
+                                              </span>
+                                              <span className="flex items-center gap-0.5 text-red-600">
+                                                <ThumbsDown className="h-3 w-3" />
+                                                {feedbackCounts.thumbsDown}
+                                              </span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </td>
+                                      <td className="p-2">
+                                        {exam.accepted ? (
+                                          <span className="text-green-500 font-semibold">✓ {exam.minScore}</span>
+                                        ) : (
+                                          <span className="text-red-500">✗ Not Accepted</span>
+                                        )}
+                                      </td>
+                                      <td className="p-2">
+                                        {exam.accepted && exam.credits ? (
+                                          <span>{exam.credits}</span>
+                                        ) : (
+                                          <span className="text-muted-foreground">-</span>
+                                        )}
+                                      </td>
+                                      <td className="p-2">
+                                        {exam.accepted && exam.courseCode ? (
+                                          <span className="text-muted-foreground">{exam.courseCode}</span>
+                                        ) : (
+                                          <span className="text-muted-foreground">-</span>
+                                        )}
+                                      </td>
+                                      <td className="p-2">
+                                        <div className="flex items-center gap-1">
+                                          <button
+                                            onClick={() => handleFeedbackClick(college.id, exam.exam, "up")}
+                                            className={`p-1 rounded hover:bg-accent transition-colors ${
+                                              currentFeedback === "up" ? "text-green-500 bg-green-500/20" : "text-muted-foreground hover:text-green-500"
+                                            }`}
+                                            title="Thumbs up"
+                                          >
+                                            <ThumbsUp className="h-3.5 w-3.5" />
+                                          </button>
+                                          <button
+                                            onClick={() => handleFeedbackClick(college.id, exam.exam, "down")}
+                                            className={`p-1 rounded hover:bg-accent transition-colors ${
+                                              currentFeedback === "down" ? "text-red-500 bg-red-500/20" : "text-muted-foreground hover:text-red-500"
+                                            }`}
+                                            title="Thumbs down"
+                                          >
+                                            <ThumbsDown className="h-3.5 w-3.5" />
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
                               </tbody>
                             </table>
                           </div>
@@ -1006,24 +1099,70 @@ const LearnerPortal = () => {
                     return policy;
                   });
 
+                  const feedbackCounts = getExamFeedbackCounts(examName);
+
                   return (
                     <tr key={examName} className="border-b">
-                      <td className="p-3 font-medium sticky left-0 bg-card">{examName}</td>
-                      {examData.map((policy, idx) => (
-                        <td key={selectedForCompare[idx]} className="p-3">
-                          {policy && policy.minimumScore !== null ? (
-                            <div className="text-sm">
-                              <span className="text-green-500 font-semibold">✓</span> {policy.minimumScore}
-                              {policy.creditsAwarded && ` / ${policy.creditsAwarded}cr`}
-                              {policy.classEquivalent && (
-                                <div className="text-xs text-muted-foreground mt-1">{policy.classEquivalent}</div>
-                              )}
+                      <td className="p-3 sticky left-0 bg-card">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-medium">{examName}</span>
+                          {(feedbackCounts.thumbsUp > 0 || feedbackCounts.thumbsDown > 0) && (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-0.5 text-green-600">
+                                <ThumbsUp className="h-3 w-3" />
+                                {feedbackCounts.thumbsUp}
+                              </span>
+                              <span className="flex items-center gap-0.5 text-red-600">
+                                <ThumbsDown className="h-3 w-3" />
+                                {feedbackCounts.thumbsDown}
+                              </span>
                             </div>
-                          ) : (
-                            <span className="text-red-500 text-sm">✗ Not Accepted</span>
                           )}
-                        </td>
-                      ))}
+                        </div>
+                      </td>
+                      {examData.map((policy, idx) => {
+                        const collegeId = selectedForCompare[idx];
+                        const currentFeedback = getFeedback(collegeId, examName);
+                        return (
+                          <td key={collegeId} className="p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                {policy && policy.minimumScore !== null ? (
+                                  <div className="text-sm">
+                                    <span className="text-green-500 font-semibold">✓</span> {policy.minimumScore}
+                                    {policy.creditsAwarded && ` / ${policy.creditsAwarded}cr`}
+                                    {policy.classEquivalent && (
+                                      <div className="text-xs text-muted-foreground mt-1">{policy.classEquivalent}</div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-red-500 text-sm">✗ Not Accepted</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                <button
+                                  onClick={() => handleFeedbackClick(collegeId, examName, "up")}
+                                  className={`p-1.5 rounded hover:bg-accent transition-colors ${
+                                    currentFeedback === "up" ? "text-green-500 bg-green-500/20" : "text-muted-foreground hover:text-green-500"
+                                  }`}
+                                  title="Thumbs up"
+                                >
+                                  <ThumbsUp className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleFeedbackClick(collegeId, examName, "down")}
+                                  className={`p-1.5 rounded hover:bg-accent transition-colors ${
+                                    currentFeedback === "down" ? "text-red-500 bg-red-500/20" : "text-muted-foreground hover:text-red-500"
+                                  }`}
+                                  title="Thumbs down"
+                                >
+                                  <ThumbsDown className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })}
