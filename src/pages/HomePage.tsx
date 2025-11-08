@@ -44,7 +44,7 @@ const Index = () => {
             <div className="flex items-center gap-2">
                 <Link to="/" className="flex items-center gap-2">
                 <img 
-                    src="/ModernStates.png"       // path to the PNG in the public folder
+                    src="public/ModernStates.png"       // path to the PNG in the public folder
                     alt="Modern States Logo" 
                     className="h-12 w-16"
                 />
