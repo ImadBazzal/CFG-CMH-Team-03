@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, ChevronLeft, ChevronRight, MapPin, Star, X, Grid3x3, List, Download } from "lucide-react";
+import { Send, Bot, User, ChevronLeft, ChevronRight, MapPin, Star, X, Grid3x3, List, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -24,6 +24,11 @@ interface College {
   highlighted?: boolean;
 }
 
+interface UserExamScore {
+  exam: string;
+  score: number | null;
+}
+
 const LearnerPortal = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -33,6 +38,7 @@ const LearnerPortal = () => {
   const [expandedCard, setExpandedCard] = useState<number | null>(null);
   const [showComparison, setShowComparison] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [userExamScores, setUserExamScores] = useState<UserExamScore[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -140,6 +146,63 @@ const LearnerPortal = () => {
     { exam: "Calculus", accepted: false, minScore: null, credits: null, courseCode: null },
     { exam: "American Government", accepted: true, minScore: 50, credits: 3, courseCode: "POL 101" },
   ];
+
+  const availableExams = [
+    "American Government",
+    "History of the United States I",
+    "History of the United States II",
+    "Introductory Sociology",
+    "Social Sciences and History",
+    "Western Civilization I",
+    "Western Civilization II",
+    "College Composition",
+    "College Composition Modular",
+    "American Literature",
+    "Analyzing and Interpreting Literature",
+    "English Literature",
+    "Human Growth and Development",
+    "Introduction to Educational Psychology",
+    "Introductory Psychology",
+    "Principles of Macroeconomics",
+    "Principles of Microeconomics",
+    "Biology",
+    "Chemistry",
+    "Natural Sciences",
+    "Calculus",
+    "College Algebra",
+    "College Mathematics",
+    "Precalculus",
+    "French Language Level I",
+    "French Language Level II",
+    "German Language Level I",
+    "German Language Level II",
+    "Spanish Language Level I",
+    "Spanish Language Level II",
+    "Financial Accounting",
+    "Information Systems",
+    "Introductory Business Law",
+    "Principles of Management",
+    "Principles of Marketing",
+    "Spanish With Writing Level I",
+    "Spanish With Writing Level II",
+    "Humanities"
+  ];
+
+  const handleExamToggle = (exam: string) => {
+    const existingExam = userExamScores.find(e => e.exam === exam);
+    if (existingExam) {
+      setUserExamScores(userExamScores.filter(e => e.exam !== exam));
+    } else {
+      setUserExamScores([...userExamScores, { exam, score: null }]);
+    }
+  };
+
+  const handleScoreChange = (exam: string, score: string) => {
+    const numScore = score === "" ? null : (isNaN(parseInt(score, 10)) ? null : parseInt(score, 10));
+    setUserExamScores(userExamScores.map(e => 
+      e.exam === exam ? { ...e, score: numScore } : e
+    ));
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -350,16 +413,64 @@ const LearnerPortal = () => {
 
             {/* CLEP Exam Selection */}
             <div className="space-y-3">
-              <h4 className="font-medium text-sm">CLEP Exams</h4>
-              <select className="w-full h-10 px-3 rounded-lg bg-background border border-border focus:border-primary focus:outline-none">
-                <option value="">Select exams</option>
-                <option value="biology">Biology</option>
-                <option value="chemistry">Chemistry</option>
-                <option value="calculus">Calculus</option>
-                <option value="american-gov">American Government</option>
-                <option value="history">U.S. History</option>
-              </select>
-              <p className="text-xs text-muted-foreground">0 exams selected</p>
+              <h4 className="font-medium text-sm">Filter By Exams & Scores</h4>
+              
+              {/* Exam Selection Checkboxes with Inline Score Inputs */}
+              <div className="max-h-64 overflow-y-auto border border-border rounded-lg p-2 space-y-2">
+                {availableExams.map((exam) => {
+                  const isSelected = userExamScores.some(e => e.exam === exam);
+                  const userExam = userExamScores.find(e => e.exam === exam);
+                  return (
+                    <div
+                      key={exam}
+                      className={`flex items-center gap-2 p-1.5 rounded transition-colors ${
+                        isSelected ? 'bg-accent/30 border border-border' : 'hover:bg-accent/50'
+                      }`}
+                    >
+                      <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleExamToggle(exam)}
+                          className="rounded flex-shrink-0"
+                        />
+                        <span className="text-sm flex-1 min-w-0 truncate">{exam}</span>
+                      </label>
+                      {isSelected && (
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <Input
+                            type="number"
+                            min="20"
+                            max="80"
+                            placeholder="Score"
+                            value={userExam?.score === null ? "" : userExam?.score?.toString() || ""}
+                            onChange={(e) => handleScoreChange(exam, e.target.value)}
+                            className="h-7 w-20 text-xs"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleExamToggle(exam);
+                            }}
+                            className="h-7 w-7 p-0 flex-shrink-0"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
+                {userExamScores.length} exam{userExamScores.length !== 1 ? 's' : ''} selected
+                {userExamScores.filter(e => e.score !== null).length > 0 && 
+                  ` • ${userExamScores.filter(e => e.score !== null).length} with scores`}
+              </p>
             </div>
 
             {/* Score & Credit Requirements */}
