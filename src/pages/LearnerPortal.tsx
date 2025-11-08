@@ -48,6 +48,8 @@ const LearnerPortal = () => {
   const [expandedCard, setExpandedCard] = useState<number | null>(null);
   const [showComparison, setShowComparison] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  // add sort option state
+  const [sortOption, setSortOption] = useState<"name" | "mostExams" | "lowestScore">("name");
   const [userExamScores, setUserExamScores] = useState<UserExamScore[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatbotSectionRef = useRef<HTMLDivElement>(null);
@@ -107,9 +109,9 @@ const LearnerPortal = () => {
     "Low score requirements",
   ];
 
-  // Filter colleges based on filter state
+  // Filter + sort colleges based on filter state and selected sortOption
   const filteredColleges = useMemo(() => {
-    return allColleges.filter(college => {
+    let results = allColleges.filter((college) => {
       // State filter
       if (selectedState && college.state !== selectedState) {
         return false;
@@ -133,7 +135,18 @@ const LearnerPortal = () => {
 
       return true;
     });
-  }, [selectedState, minScore, minCredits, userExamScores]);
+
+    // Sorting
+    if (sortOption === "name") {
+      results = results.slice().sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortOption === "lowestScore") {
+      results = results.slice().sort((a, b) => a.avgScore - b.avgScore);
+    } else if (sortOption === "mostExams") {
+      results = results.slice().sort((a, b) => b.examsAccepted - a.examsAccepted);
+    }
+
+    return results;
+  }, [selectedState, minScore, minCredits, userExamScores, sortOption]);
 
   // Filter handler functions
   const handleInstitutionTypeToggle = (type: string) => {
@@ -717,11 +730,14 @@ const LearnerPortal = () => {
               <p className="text-sm text-muted-foreground">Showing {filteredColleges.length} college{filteredColleges.length !== 1 ? 's' : ''}</p>
             </div>
             <div className="flex items-center gap-2">
-              <select className="h-9 px-3 rounded-lg bg-background border border-border text-sm">
-                <option>Sort by Relevance</option>
-                <option>Name A-Z</option>
-                <option>Most Exams Accepted</option>
-                <option>Lowest Score Required</option>
+              <select
+                className="h-9 px-3 rounded-lg bg-background border border-border text-sm"
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value as "name" | "mostExams" | "lowestScore")}
+              >
+                <option value="name">Name A-Z</option>
+                <option value="mostExams">Most Exams Accepted</option>
+                <option value="lowestScore">Lowest Cutoff Score</option>
               </select>
               <div className="flex border border-border rounded-lg">
                 <Button
