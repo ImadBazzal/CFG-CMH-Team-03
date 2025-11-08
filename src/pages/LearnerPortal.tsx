@@ -45,7 +45,6 @@ const LearnerPortal = () => {
   const [expandedCard, setExpandedCard] = useState<number | null>(null);
   const [showComparison, setShowComparison] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  // add sort option state
   const [sortOption, setSortOption] = useState<"name" | "mostExams" | "lowestScore">("name");
   const [userExamScores, setUserExamScores] = useState<UserExamScore[]>([]);
   const [examPolicyFeedback, setExamPolicyFeedback] = useState<ExamPolicyFeedback[]>([]);
@@ -111,23 +110,34 @@ const LearnerPortal = () => {
   const allUniversities = useMemo(() => getAllUniversities(), []);
   const availableExams = useMemo(() => getAllExamNames(), []);
 
-  // Filter colleges based on filter state using database
+  // Filter colleges based on filter state and then sort according to sortOption
   const filteredColleges = useMemo(() => {
-    const examNames = userExamScores.map(e => e.exam);
-    
+    const examNames = userExamScores.map((e) => e.exam);
+
     const filters = {
       state: selectedState || undefined,
-      // Only apply filters if they're greater than 0 (default is 0 to show all universities)
       minScore: minScore > 0 ? minScore : undefined,
       minCredits: minCredits > 0 ? minCredits : undefined,
       examNames: examNames.length > 0 ? examNames : undefined,
       minExamsAccepted: examNames.length > 0 ? examNames.length : undefined,
-      // Pass user exam scores for score-based filtering
-      userExamScores: userExamScores.length > 0 ? userExamScores : undefined
+      userExamScores: userExamScores.length > 0 ? userExamScores : undefined,
     };
 
-    return filterUniversities(filters) as College[];
-  }, [selectedState, minScore, minCredits, userExamScores]);
+    let results = filterUniversities(filters) as College[];
+
+    // Sorting
+    if (sortOption === "name") {
+      results = results.slice().sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortOption === "lowestScore") {
+      results = results
+        .slice()
+        .sort((a, b) => (a.avgScore ?? Number.POSITIVE_INFINITY) - (b.avgScore ?? Number.POSITIVE_INFINITY));
+    } else if (sortOption === "mostExams") {
+      results = results.slice().sort((a, b) => (b.examsAccepted ?? 0) - (a.examsAccepted ?? 0));
+    }
+
+    return results;
+  }, [selectedState, minScore, minCredits, userExamScores, sortOption]);
 
   // Filter handler functions
   const handleInstitutionTypeToggle = (type: string) => {
@@ -727,7 +737,7 @@ const LearnerPortal = () => {
               >
                 <option value="name">Name A-Z</option>
                 <option value="mostExams">Most Exams Accepted</option>
-                <option value="lowestScore">Lowest Cutoff Score</option>
+                <option value="lowestScore">Lowest Score Required</option>
               </select>
               <div className="flex border border-border rounded-lg">
                 <Button
@@ -1184,3 +1194,4 @@ const LearnerPortal = () => {
 };
 
 export default LearnerPortal;
+
