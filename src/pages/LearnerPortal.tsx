@@ -683,10 +683,10 @@ const LearnerPortal = () => {
               <div className="border border-border rounded-lg overflow-hidden">
                 <div className="bg-muted/30 p-4 border-b border-border">
                   <p className="text-sm text-muted-foreground">
-                    Google Maps integration will be displayed here. This section will show all matching colleges on an interactive map.
+                    Maps integration will be displayed here. This section will show all matching colleges on an interactive map.
                   </p>
                 </div>
-                {/* Google Maps Container - Ready for integration */}
+                {/* Maps Container - Ready for integration */}
                 <div 
                   id="google-maps-container"
                   className="w-full h-[500px] bg-muted/20 flex items-center justify-center"
@@ -695,10 +695,10 @@ const LearnerPortal = () => {
                   <div className="text-center space-y-2">
                     <Map className="h-12 w-12 text-muted-foreground mx-auto opacity-50" />
                     <p className="text-sm text-muted-foreground font-medium">
-                      Google Maps will be integrated here
+                      Maps will be integrated here
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      This space is ready for Google Maps API integration
+                      This space is ready for Maps API integration
                     </p>
                   </div>
                 </div>
