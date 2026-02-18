@@ -1,0 +1,7 @@
+# Ignore files and directories
+*.log
+*.tmp
+node_modules/
+docker-compose.*.yml
+.env
+.DS_Store
