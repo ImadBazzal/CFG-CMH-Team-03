@@ -1,7 +1,7 @@
 # Dockerfile for Vite React TypeScript Application
 
 # Use the official Node.js image as the base image
-FROM node:16
+FROM node:22
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -12,14 +12,13 @@ COPY package*.json ./
 # Install the dependencies
 RUN npm install
 
+RUN npm install -D vite
+
 # Copy the rest of the application code to the working directory
 COPY . .
 
-# Build the application
-RUN npm run build
-
 # Expose the port the app runs on
-EXPOSE 5173
+EXPOSE 8080
 
 # Start the application
-CMD [ "npm", "run", "serve" ]
+CMD [ "npm", "run", "dev" ]
