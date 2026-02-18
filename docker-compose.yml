@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+      - VITE_GOOGLE_MAPS_API_KEY=${VITE_GOOGLE_MAPS_API_KEY}
+      - VITE_ANTHROPIC_API_KEY=${VITE_ANTHROPIC_API_KEY}
+      - VITE_SMTP_HOST=${VITE_SMTP_HOST}
+      - VITE_SMTP_PORT=${VITE_SMTP_PORT}
+      - VITE_SMTP_USER=${VITE_SMTP_USER}
+      - VITE_SMTP_PASS=${VITE_SMTP_PASS}
+      - VITE_APP_URL=${VITE_APP_URL}
+      - NODE_ENV=${NODE_ENV:-development}
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
